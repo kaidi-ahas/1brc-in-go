@@ -6,19 +6,19 @@ file with rows:
 1. Read the file
 Line by line (streaming — not loading the whole file into memory).
 
-2. Group by station name
-Each station accumulates:
-min
-max
-sum
-count
-
-map the station and all the temperatures
+2. map the station and all the temperatures
 
 "station": [1.3, 2.7, 3.0, 4.3, 4.2]
 map type:
 key - string
 value - []float64
+
+3. Group by station name
+Each station accumulates:
+min
+max
+sum
+count
 
 For a slice of floats you must compute for each station:
 1. minimum temperature
@@ -43,3 +43,6 @@ One line per station, like this:
 Station=min/avg/max, 
 Station=min/avg/max, 
 ...}
+
+Like this:
+{Hamburg=5.3/10.1/15.8, Berlin=3.2/7.9/12.4}

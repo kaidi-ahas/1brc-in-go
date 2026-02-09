@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -36,10 +37,38 @@ func main() {
 		station := separated[0]
 
 		stationData[station]= append(stationData[station], temp)
+
+		// accumulate min, max, ave, count for each station
+
 	}
 	if err := scanner.Err(); err != nil {
 		log.Println(err)
 	}
 	
-	fmt.Println(stationData)
+	output := make(map[string][]float64)
+
+	for station, temps := range stationData {
+		output[station] = calculate(temps)
+	}
+
+	for stat, calc := range output {
+		fmt.Printf("%v:%v\n", stat,calc)
+	}
+}
+
+func calculate(temps []float64) []float64 {
+	var results []float64
+
+	min := slices.Min(temps)
+	max := slices.Max(temps)
+	var sum float64
+	for _, temp := range temps {
+		sum+=temp
+	}
+	count := len(temps)
+
+	average := sum / float64(count)
+
+	results = append(results, min, average, max)
+	return results
 }
