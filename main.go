@@ -36,9 +36,6 @@ func main() {
 		station := separated[0]
 
 		stationMeasurements[station] = append(stationMeasurements[station], temp)
-
-		// accumulate min, max, ave, count for each station
-
 	}
 	if err := scanner.Err(); err != nil {
 		log.Println(err)
