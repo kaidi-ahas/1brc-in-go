@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
+	"strings"
 )
 
 
@@ -15,14 +17,29 @@ func main() {
 	}
 	defer fileHandle.Close()
 
-	line := 0
+	stationData := make(map[string][]float64)
+
 	scanner := bufio.NewScanner(fileHandle)
 	for scanner.Scan() {
-		line++
+		line := scanner.Text()
+		separated := strings.Split(line, ";")
+		if len(separated) != 2 {
+			log.Printf("bad line: %q", line)
+			continue
+		}
+		temp, err := strconv.ParseFloat(separated[1], 64)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+		
+		station := separated[0]
+
+		stationData[station]= append(stationData[station], temp)
 	}
-	err = scanner.Err()
-	if err != nil {
+	if err := scanner.Err(); err != nil {
 		log.Println(err)
 	}
-	fmt.Println(line)
+	
+	fmt.Println(stationData)
 }

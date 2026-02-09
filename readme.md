@@ -18,7 +18,7 @@ map the station and all the temperatures
 "station": [1.3, 2.7, 3.0, 4.3, 4.2]
 map type:
 key - string
-value - []float32
+value - []float64
 
 For a slice of floats you must compute for each station:
 1. minimum temperature
