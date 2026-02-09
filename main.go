@@ -9,17 +9,20 @@ import (
 
 
 func main() {
-	file, err := os.Open("measurements.txt")
+	fileHandle, err := os.Open("measurements.txt")
 	if err != nil {
 		log.Println(err)
 	}
+	defer fileHandle.Close()
 
 	line := 0
-
-	scanner := bufio.NewScanner(file)
+	scanner := bufio.NewScanner(fileHandle)
 	for scanner.Scan() {
 		line++
 	}
-
+	err = scanner.Err()
+	if err != nil {
+		log.Println(err)
+	}
 	fmt.Println(line)
 }
