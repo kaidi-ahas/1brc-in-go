@@ -17,7 +17,7 @@ func main() {
 	}
 	defer fileHandle.Close()
 
-	stationData := make(map[string][]float64)
+	stationMeasurements := make(map[string][]float64)
 
 	scanner := bufio.NewScanner(fileHandle)
 	for scanner.Scan() {
@@ -35,7 +35,7 @@ func main() {
 
 		station := separated[0]
 
-		stationData[station] = append(stationData[station], temp)
+		stationMeasurements[station] = append(stationMeasurements[station], temp)
 
 		// accumulate min, max, ave, count for each station
 
@@ -46,7 +46,7 @@ func main() {
 
 	output := make(map[string][]float64)
 
-	for station, temps := range stationData {
+	for station, temps := range stationMeasurements {
 		output[station] = calculate(temps)
 	}
 
@@ -59,18 +59,28 @@ func main() {
 
 	fmt.Print("{")
 	for i, station := range stations {
-		stats := output[station]
+		statistics := output[station]
 
 		if i > 0 {
 			fmt.Print(", ")
 		}
 
+		stats := struct {
+			Min float64
+			Avg float64
+			Max float64
+		}{
+			Min: statistics[0],
+			Avg: statistics[1],
+			Max: statistics[2],
+		}
+
 		fmt.Printf(
 			"%s=%.1f/%.1f/%.1f",
 			station,
-			stats[0],
-			stats[1],
-			stats[2],
+			stats.Min,
+			stats.Avg,
+			stats.Max,
 		)
 	}
 	fmt.Println("}")
@@ -78,7 +88,7 @@ func main() {
 }
 
 func calculate(temps []float64) []float64 {
-	var results []float64
+	var stationStatistics []float64
 
 	min := slices.Min(temps)
 	max := slices.Max(temps)
@@ -90,6 +100,6 @@ func calculate(temps []float64) []float64 {
 
 	average := sum / float64(count)
 
-	results = append(results, min, average, max)
-	return results
+	stationStatistics = append(stationStatistics, min, average, max)
+	return stationStatistics
 }
