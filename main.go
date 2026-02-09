@@ -10,7 +10,6 @@ import (
 	"strings"
 )
 
-
 func main() {
 	fileHandle, err := os.Open("measurements.txt")
 	if err != nil {
@@ -33,10 +32,10 @@ func main() {
 			log.Println(err)
 			continue
 		}
-		
+
 		station := separated[0]
 
-		stationData[station]= append(stationData[station], temp)
+		stationData[station] = append(stationData[station], temp)
 
 		// accumulate min, max, ave, count for each station
 
@@ -44,16 +43,38 @@ func main() {
 	if err := scanner.Err(); err != nil {
 		log.Println(err)
 	}
-	
+
 	output := make(map[string][]float64)
 
 	for station, temps := range stationData {
 		output[station] = calculate(temps)
 	}
 
-	for stat, calc := range output {
-		fmt.Printf("%v:%v\n", stat,calc)
+	stations := make([]string, 0, len(output))
+	for station := range output {
+		stations = append(stations, station)
 	}
+
+	slices.Sort(stations)
+
+	fmt.Print("{")
+	for i, station := range stations {
+		stats := output[station]
+
+		if i > 0 {
+			fmt.Print(", ")
+		}
+
+		fmt.Printf(
+			"%s=%.1f/%.1f/%.1f",
+			station,
+			stats[0],
+			stats[1],
+			stats[2],
+		)
+	}
+	fmt.Println("}")
+
 }
 
 func calculate(temps []float64) []float64 {
@@ -63,7 +84,7 @@ func calculate(temps []float64) []float64 {
 	max := slices.Max(temps)
 	var sum float64
 	for _, temp := range temps {
-		sum+=temp
+		sum += temp
 	}
 	count := len(temps)
 
