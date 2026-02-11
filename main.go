@@ -17,20 +17,31 @@ type Stats struct {
 }
 
 func (s *Stats) Add(value float64) {
-	if value < s.Min {
+
+	if s.Count == 0 {
 		s.Min = value
-	}
-	if value > s.Max {
 		s.Max = value
+	} else {
+		if value < s.Min {
+			s.Min = value
+		}
+		if value > s.Max {
+			s.Max = value
+		}
 	}
 	s.Sum += value
-	s.Count++	
+	s.Count++
 }
 
 func main() {
-	file, err := os.Open("measurements.txt")
+	fmt.Println(readMeasurements("measurements.txt"))
+
+}
+
+func readMeasurements(path string) map[string]*Stats {
+	file, err := os.Open(path)
 	if err != nil {
-		log.Println(err)
+		log.Fatal(err)
 	}
 	defer file.Close()
 	
@@ -39,29 +50,34 @@ func main() {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
-		fields := strings.Split(line, ";")
-		if len(fields) != 2 {
+		station, value, found := strings.Cut(line, ";")
+		if !found {
 			log.Printf("bad line: %q", line)
 			continue
 		}
 		
-		temp, err := strconv.ParseFloat(fields[1], 64)
+		temperature, err := strconv.ParseFloat(value, 64)
 		if err != nil {
 			log.Println(err)
 			continue
 		}
 
-		stats := &Stats{}
+		stats, exists := statsByStation[station]
 
-		stats.Add(temp)
+		if !exists {
+			stats = &Stats{}
+			statsByStation[station]=stats
+		}
 
-		station := fields[0]
+		stats.Add(temperature)
 
-		statsByStation[station] = stats
 	}
 	if err := scanner.Err(); err != nil {
 		log.Println(err)
 	}
-	fmt.Println("}")
+	return statsByStation
+}
 
+func printStats(stats map[string]*Stats) {
+	
 }
