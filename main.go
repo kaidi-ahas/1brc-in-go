@@ -1,31 +1,47 @@
 package main
 
 import (
-	"bufio"
-	"log"
-	"os"
 	"fmt"
+	"strconv"
+	"strings"
 )
 
+// Goal: Parse one line
+// create a struct for measurement
+// change countLines to return the lines slice
 
 func main() {
-	fmt.Println(countLines("measurements.txt"))
+	line := "Hamburg;12.3"
+	m, err := parseLine(line)
+	if err != nil {
+		fmt.Println("error:", err)
+		return
+	}
+
+	fmt.Printf("%+v\n", m)
+
 }
 
-func countLines(path string) int {
-	file, err := os.Open(path)
+type Measurement struct {
+	Station string
+	Temperature float64
+}
+
+func parseLine(line string) (Measurement, error) {
+	station, value, found := strings.Cut(line, ";")
+	if !found {
+		return Measurement{}, fmt.Errorf("Bad line: %q", line)
+	}
+
+	temperature, err := strconv.ParseFloat(value, 64)
 	if err != nil {
-		log.Fatal(err)
+		return Measurement{}, fmt.Errorf("invalid temperature: %q: %w", value, err)
 	}
 
-	var line int
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line++
-	}
-	
-	return line
+	return Measurement{
+		Station: station,
+		Temperature: temperature,
+	}, nil
 }
 
 
