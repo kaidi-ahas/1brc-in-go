@@ -9,9 +9,6 @@ import (
 	"strings"
 )
 
-// Implement the Stats
-// Stats are updated by streaming
-
 // goal read the temperature measurements per weather station, aggregate the statistics and print to the standard output
 
 // Create stats
@@ -54,32 +51,29 @@ func main() {
 
 	// name it to a measurement
 	// one measurement is station and it's statistics
-	// create a type for measurement (station, temperature)
 	stationMeasurements := make(map[string]*Stats)
 
 	scanner := bufio.NewScanner(fileHandle)
 	for scanner.Scan() {
+		line := scanner.Text()
 		// rename separated to parts or fields and use Cut instead
-		separated := strings.Split(scanner.Text(), ";")
-		if len(separated) != 2 {
-			log.Printf("bad line")
+		station, value, found := strings.Cut(line, ";")
+		if !found {
+			log.Printf("bad line: %s", line)
 			continue
 		}
 		// Create a separate function for parsing
-		temp, err := strconv.ParseFloat(separated[1], 64)
+		temperature, err := strconv.ParseFloat(value, 64)
 		if err != nil {
-			log.Println(err)
+			log.Printf("failed to parse %s. Err: %v", value, err)
 			continue
 		}
-
-		station := separated[0]
-
 		s, exists := stationMeasurements[station]
 		if !exists {
 			s = &Stats{}
 			stationMeasurements[station] = s
 		}
-		s.Add(temp)
+		s.Add(temperature)
 	}
 	if err := scanner.Err(); err != nil {
 		log.Println(err)
