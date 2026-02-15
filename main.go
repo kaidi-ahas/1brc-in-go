@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strconv"
@@ -45,24 +46,27 @@ func main() {
 	}
 	defer file.Close()
 
+	measurement, err := readMeasurements(file)
+	if err != nil {
+		log.Println(err)
+	}
+
+	printResults(measurement)
+}
+
+func readMeasurements(r io.Reader) (map[string]*Stats, error) {
 	measurement := make(map[string]*Stats)
 
-	scanner := bufio.NewScanner(file)
+	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
 		line := scanner.Text()
-		station, value, found := strings.Cut(line, ";")
-		if !found {
-			log.Printf("bad line: %s", line)
-			continue
-		}
-		// Create a separate function for parsing
-		temperature, err := strconv.ParseFloat(value, 64)
+		station, temperature, err := parseLine(line)
 		if err != nil {
-			log.Printf("failed to parse %s. Err: %v", value, err)
 			continue
 		}
-		s, exists := measurement[station]
-		if !exists {
+
+		s := measurement[station]
+		if s == nil {
 			s = &Stats{}
 			measurement[station] = s
 		}
@@ -71,13 +75,28 @@ func main() {
 	if err := scanner.Err(); err != nil {
 		log.Println(err)
 	}
+	return measurement, nil
+}
 
+func parseLine(line string) (station string, temperature float64, err error) {
+	station, value, found := strings.Cut(line, ";")
+	if !found {
+		log.Printf("bad line: %s", line)
+	}
+
+	temperature, err = strconv.ParseFloat(value, 64)
+	if err != nil {
+		log.Printf("failed to parse %s. Err: %v", value, err)
+	}
+	return station, temperature, nil
+}
+
+func printResults(measurement map[string]*Stats) {
 	var stations []string
 
 	for s := range measurement {
 		stations = append(stations, s)
 	}
-
 
 	fmt.Println("{")
 	for station, stat := range measurement {
