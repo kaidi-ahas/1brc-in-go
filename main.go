@@ -45,14 +45,11 @@ func main() {
 	}
 	defer file.Close()
 
-	// name it to a measurement
-	// one measurement is station and it's statistics
-	stationMeasurements := make(map[string]*Stats)
+	measurement := make(map[string]*Stats)
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
-		// rename separated to parts or fields and use Cut instead
 		station, value, found := strings.Cut(line, ";")
 		if !found {
 			log.Printf("bad line: %s", line)
@@ -64,10 +61,10 @@ func main() {
 			log.Printf("failed to parse %s. Err: %v", value, err)
 			continue
 		}
-		s, exists := stationMeasurements[station]
+		s, exists := measurement[station]
 		if !exists {
 			s = &Stats{}
-			stationMeasurements[station] = s
+			measurement[station] = s
 		}
 		s.Add(temperature)
 	}
@@ -77,13 +74,13 @@ func main() {
 
 	var stations []string
 
-	for s := range stationMeasurements {
+	for s := range measurement {
 		stations = append(stations, s)
 	}
 
 
 	fmt.Println("{")
-	for station, stat := range stationMeasurements {
+	for station, stat := range measurement {
 		avg := stat.Avg()
 		fmt.Printf("%s=%.1f/%.1f/%.1f,\n", station, stat.Min, avg, stat.Max)
 	}
