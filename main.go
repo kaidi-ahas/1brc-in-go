@@ -13,15 +13,20 @@ import (
 
 // goal read the temperature measurements per weather station, aggregate the statistics and print to the standard output
 
+type StationStats struct {
+	data map[string]*Stats
+}
+
 type Measurement struct {
-	Station string
+	Station     string
 	Temperature float64
 }
 
+// math
 type Stats struct {
-	Min float64
-	Max float64
-	Sum float64
+	Min   float64
+	Max   float64
+	Sum   float64
 	Count int
 }
 
@@ -37,32 +42,62 @@ func (s *Stats) Add(value float64) {
 		s.Max = value
 	}
 	s.Count++
-	s.Sum+=value
+	s.Sum += value
 }
 
-func (s *Stats) Avg() float64{
+func (ss *StationStats) Add(m Measurement) {
+	stats := ss.data[m.Station]
+	if stats == nil {
+		stats = &Stats{}
+		ss.data[m.Station] = stats
+	}
+	stats.Add(m.Temperature)
+}
+
+func (ss *StationStats) Results() map[string]*Stats {
+	return ss.data
+}
+
+func (ss *StationStats) Print(w io.Writer) {
+	fmt.Fprintln(w, "{")
+	for station, stat := range ss.Results() {
+		avg := stat.Avg()
+		fmt.Fprintf(w, "%s=%.1f/%.1f/%.1f,\n", station, stat.Min, avg, stat.Max)
+	}
+	fmt.Fprintln(w, "}")
+}
+
+func (s *Stats) Avg() float64 {
 	return s.Sum / float64(s.Count)
 }
 
 func main() {
 	path := "measurements.txt"
+
 	file, err := os.Open(path)
 	if err != nil {
 		log.Fatalf("could not open the file %s. %s", path, err)
 	}
 	defer file.Close()
 
-	measurement, err := readMeasurements(file)
+	ss := NewStationStats()
+
+	err = readMeasurements(file, ss)
 	if err != nil {
 		log.Println(err)
 	}
 
-	printResults(measurement)
+	ss.Print(os.Stdout)
 }
 
-func readMeasurements(r io.Reader) (map[string]*Stats, error) {
-	stationByStats := make(map[string]*Stats)
+func NewStationStats() *StationStats {
+	return &StationStats{
+		data: make(map[string]*Stats),
+	}
+}
 
+// scanning, parsing
+func readMeasurements(r io.Reader, ss *StationStats) error {
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -70,21 +105,12 @@ func readMeasurements(r io.Reader) (map[string]*Stats, error) {
 		if err != nil {
 			continue
 		}
-		
-		station := measurement.Station
-		temp := measurement.Temperature
-
-		stats := stationByStats[station]
-		if stats == nil {
-			stats = &Stats{}
-			stationByStats[station] = stats
-		}
-		stats.Add(temp)
+		ss.Add(measurement)
 	}
 	if err := scanner.Err(); err != nil {
-		log.Println(err)
+		return scanner.Err()
 	}
-	return stationByStats, nil
+	return nil
 }
 
 func parseLine(line string) (m Measurement, err error) {
