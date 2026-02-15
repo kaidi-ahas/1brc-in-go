@@ -41,19 +41,18 @@ func (s *Stats) Avg() float64{
 
 func main() {
 	// Create a separate function for producing the file
-	// name filehandle to file (file is a handle)
-	fileHandle, err := os.Open("measurements.txt")
+	file, err := os.Open("measurements.txt")
 	if err != nil {
 		// this error needs to be fatal, without file, the program is useless
 		log.Println(err)
 	}
-	defer fileHandle.Close()
+	defer file.Close()
 
 	// name it to a measurement
 	// one measurement is station and it's statistics
 	stationMeasurements := make(map[string]*Stats)
 
-	scanner := bufio.NewScanner(fileHandle)
+	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
 		// rename separated to parts or fields and use Cut instead
