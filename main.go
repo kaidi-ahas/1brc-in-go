@@ -11,7 +11,6 @@ import (
 
 // goal read the temperature measurements per weather station, aggregate the statistics and print to the standard output
 
-// Create stats
 type Stats struct {
 	Min float64
 	Max float64
@@ -19,7 +18,6 @@ type Stats struct {
 	Count int
 }
 
-// create add and average methods for stats
 func (s *Stats) Add(value float64) {
 	if s.Count == 0 {
 		s.Min = value
@@ -40,11 +38,10 @@ func (s *Stats) Avg() float64{
 }
 
 func main() {
-	// Create a separate function for producing the file
-	file, err := os.Open("measurements.txt")
+	path := "measurements.txt"
+	file, err := os.Open(path)
 	if err != nil {
-		// this error needs to be fatal, without file, the program is useless
-		log.Println(err)
+		log.Fatalf("could not open the file %s. %s", path, err)
 	}
 	defer file.Close()
 
@@ -82,6 +79,7 @@ func main() {
 	// I need a value from that address
 	stats := *stationMeasurements["Hamburg"]
 
+	// this adds "Hamburg's" average to every station, move it
 	avg := stats.Avg()
 
 	var stations []string
@@ -93,6 +91,7 @@ func main() {
 
 	fmt.Println("{")
 	for station, stat := range stationMeasurements {
+		// call the Avg method here
 		fmt.Printf("%s=%.1f/%.1f/%.1f,\n", station, stat.Min, avg, stat.Max)
 	}
 	fmt.Println("}")
