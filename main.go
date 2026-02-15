@@ -75,13 +75,6 @@ func main() {
 		log.Println(err)
 	}
 
-
-	// I need a value from that address
-	stats := *stationMeasurements["Hamburg"]
-
-	// this adds "Hamburg's" average to every station, move it
-	avg := stats.Avg()
-
 	var stations []string
 
 	for s := range stationMeasurements {
@@ -91,7 +84,7 @@ func main() {
 
 	fmt.Println("{")
 	for station, stat := range stationMeasurements {
-		// call the Avg method here
+		avg := stat.Avg()
 		fmt.Printf("%s=%.1f/%.1f/%.1f,\n", station, stat.Min, avg, stat.Max)
 	}
 	fmt.Println("}")
