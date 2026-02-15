@@ -1,0 +1,19 @@
+1st version:
+took:  1m6.068239792s
+
+real    1m6.091s actual wall-clock time
+user    1m16.681s time spent executing the Go code (CPU time)
+sys     0m4.047s time spent in OS calls (file i/o, syscalls)
+
+the program:
+Finished 1B rows in ~66 seconds.
+Used 76 seconds of CPU time.
+    - used more than one core
+    - CPU bound, which means that the program is limited by computation:
+        - string splitting
+        - float parsing
+        - hashing station names
+        - map updates
+Only 4 seconds in system calls.
+    - not IO bound
+    - disk is not the bottleneck

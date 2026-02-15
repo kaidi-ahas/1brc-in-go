@@ -1,13 +1,16 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"time"
 )
 
-// goal read the temperature measurements per weather station, aggregate the statistics and print to the standard output
-
 func main() {
+
+	start := time.Now()
+
 	path := "measurements.txt"
 
 	file, err := os.Open(path)
@@ -24,4 +27,6 @@ func main() {
 	}
 
 	ss.Print(os.Stdout)
+
+	fmt.Println("took: ", time.Since(start))
 }
