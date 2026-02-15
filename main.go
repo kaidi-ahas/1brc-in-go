@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -11,6 +12,11 @@ import (
 )
 
 // goal read the temperature measurements per weather station, aggregate the statistics and print to the standard output
+
+type Measurement struct {
+	Station string
+	Temperature float64
+}
 
 type Stats struct {
 	Min float64
@@ -55,40 +61,46 @@ func main() {
 }
 
 func readMeasurements(r io.Reader) (map[string]*Stats, error) {
-	measurement := make(map[string]*Stats)
+	stationByStats := make(map[string]*Stats)
 
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
 		line := scanner.Text()
-		station, temperature, err := parseLine(line)
+		measurement, err := parseLine(line)
 		if err != nil {
 			continue
 		}
+		
+		station := measurement.Station
+		temp := measurement.Temperature
 
-		s := measurement[station]
-		if s == nil {
-			s = &Stats{}
-			measurement[station] = s
+		stats := stationByStats[station]
+		if stats == nil {
+			stats = &Stats{}
+			stationByStats[station] = stats
 		}
-		s.Add(temperature)
+		stats.Add(temp)
 	}
 	if err := scanner.Err(); err != nil {
 		log.Println(err)
 	}
-	return measurement, nil
+	return stationByStats, nil
 }
 
-func parseLine(line string) (station string, temperature float64, err error) {
+func parseLine(line string) (m Measurement, err error) {
 	station, value, found := strings.Cut(line, ";")
 	if !found {
-		log.Printf("bad line: %s", line)
+		return m, errors.New("bad line")
 	}
 
-	temperature, err = strconv.ParseFloat(value, 64)
+	temperature, err := strconv.ParseFloat(value, 64)
 	if err != nil {
-		log.Printf("failed to parse %s. Err: %v", value, err)
+		return m, errors.New("failed to parse the value")
 	}
-	return station, temperature, nil
+
+	m.Station = station
+	m.Temperature = temperature
+	return m, nil
 }
 
 func printResults(measurement map[string]*Stats) {
