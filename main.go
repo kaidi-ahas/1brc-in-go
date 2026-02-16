@@ -4,10 +4,16 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"runtime/pprof"
 	"time"
 )
 
+// add cpu profiling
+
 func main() {
+	f, _ := os.Create("cpu.prof")
+	pprof.StartCPUProfile(f)
+	defer pprof.StopCPUProfile()
 
 	start := time.Now()
 
