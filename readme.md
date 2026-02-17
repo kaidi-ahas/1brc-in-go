@@ -141,8 +141,4 @@ The higher `user` time compared to `real` indicates multi-core CPU utilization d
 
 ### Next Steps
 
-Planned experiments:
-* Bounded concurrency (worker pool)
-* Alternative IO strategies
-* Allocation reduction during parsing
-* Benchmark comparisons
+* Find a way to speed up the execution time.
