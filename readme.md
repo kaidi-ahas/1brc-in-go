@@ -139,38 +139,6 @@ The higher `user` time compared to `real` indicates multi-core CPU utilization d
 
 ---
 
-### Implementation Details
-
-#### Parsing
-
-```go
-station, value, found := strings.Cut(line, ";")
-temperature, err := strconv.ParseFloat(value, 64)
-```
-
-#### Streaming
-
-```go
-scanner := bufio.NewScanner(r)
-```
-
-The file is processed incrementally — no full-file loading.
-
-#### Aggregation
-
-Each station maintains:
-* Min
-* Max
-* Sum
-* Count
-
-Average is computed on demand:
-```go
-func (s *Stats) Avg() float64 {
-    return s.Sum / float64(s.Count)
-}
-```
-
 ### Next Steps
 
 Planned experiments:
