@@ -157,4 +157,6 @@ Replace bufio.Scanner with bufio.Reader to:
 * Reduce GC pressure
 * Potentially improve throughput
 
+---
+
 **Future improvements will be measured against this baseline.**
