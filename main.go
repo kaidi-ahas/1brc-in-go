@@ -4,14 +4,16 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"runtime"
 	"runtime/pprof"
 	"time"
 )
 
-// add cpu profiling
-
 func main() {
-	f, _ := os.Create("cpu.prof")
+	f, err := os.Create("cpu.prof")
+	if err != nil {
+		log.Fatal(err)
+	}
 	pprof.StartCPUProfile(f)
 	defer pprof.StopCPUProfile()
 
@@ -33,6 +35,18 @@ func main() {
 	}
 
 	ss.Print(os.Stdout)
+
+	mf, err := os.Create("mem.prof")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer mf.Close()
+
+	runtime.GC()
+
+	if err := pprof.WriteHeapProfile(mf); err != nil {
+		log.Fatal(err)
+	}
 
 	fmt.Println("took: ", time.Since(start))
 }
