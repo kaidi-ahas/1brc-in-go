@@ -137,7 +137,9 @@ This indicates:
 
 The program maintains a very small real memory footprint.
 
-## Performance baseline summary
+---
+
+### Performance baseline summary
 
 * The implementation is IO-bound.
 * Major allocation hotspot: Scanner.Text().
@@ -145,7 +147,9 @@ The program maintains a very small real memory footprint.
 * Allocation churn is extremely high (15GB).
 * GC likely contributes overhead.
 
-### Next optimization step
+---
+
+## Next optimization steps
 
 Replace bufio.Scanner with bufio.Reader to:
 * Eliminate per-line string allocations
