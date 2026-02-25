@@ -1,4 +1,4 @@
-# 1BRC in Go
+# 1BRC with Go
 
 Implementation of the **1 Billion Row Challenge** in Go.
 
@@ -8,7 +8,7 @@ Original challenge: [1 Billion Row Challenge](https://github.com/gunnarmorling/1
 
 ### Problem
 
-Given a file containing temperature measurements for weather stations in the format:
+Given a file containing temperature measurements in the format:
 ```
 Hamburg;12.3
 Munich;3.6
@@ -21,7 +21,7 @@ Compute, for each station:
 min/average/max
 ```
 
-Print the result to the standard output in this format:
+Print results in sorted order:
 ```
 {
     Upington=-26.2/20.4/69.4,
@@ -35,11 +35,11 @@ Print the result to the standard output in this format:
 }
 ```
 
-The main goal is to process very large datasets while measuring and understanding real performance bottlenecks.
+The main goal of this project is not code correctness, but performance analysis and optimization at large scale (1 billion rows).
 
 ---
 
-### My Project Structure
+### Project structure
 
 ```go
 .
@@ -49,96 +49,108 @@ The main goal is to process very large datasets while measuring and understandin
 ├── stats.go // aggreggation logic
 ```
 
-### Design Overview
+### Design overview
 * `ParseLine` handles parsing and validation
 * `ReadMeasurements` streams the file line-by-line using `bufio.Scanner`
 * `StationStats` encapsulates aggregation state
 * `Stats` tracks min, max, sum, and count
 * `main` wires everything together and enables CPU profiling
 
+Current implementation is **sequential** (single-threaded).
+
 ---
 
-### How to Run
+### How to run
 
-This implementation expects a `measurements.txt` file in the project root.
+Place `measurements.txt` file in the project root.
 
-The dataset can be generated following the instructions in the Original challenge: [1 Billion Row Challenge](https://github.com/gunnarmorling/1brc)
+Dataset generation instructions are available in the original challenge repository: [1 Billion Row Challenge](https://github.com/gunnarmorling/1brc)
 
-Then run:
+Build and run:
 ```bash
-go run .
+go build -o 1brc
+./1brc
 ```
 
-To measure runtime:
+Measure execution time:
 ```bash
-time go run .
+/usr/bin/time -l ./1brc
 ```
+---
+
+## Performance baseline (Sequential Version)
+
+Dataset: 1,000,000,000 rows<br> Implementation: sequential<br>
+Machine: (your machine here)
+
+### Runtime
+```
+real    54.28s
+user    51.99s
+sys     2.93s
+```
+
+Throughput:<br>
+~18.4 million rows/second
 
 ---
 
-### CPU Profiling
+### CPU profiling
 
-CPU profiling is enabled in `main.go`:
-```go
-f, _ := os.Create("cpu.prof")
-pprof.StartCPUProfile(f)
-defer pprof.StopCPUProfile()
+Top output:
+```
+51.84s  96.86%  syscall.syscall
 ```
 
-After execution:
-```
-go tool pprof cpu.prof
-```
+Interpretation:
 
-Then:
-```
-(pprof) top
-```
+- ~97% of execution time spent in syscall.syscall
+- The workload is strongly IO-bound
+- Compute logic (parsing + aggregation) is negligible relative to input reading
 
 ---
 
-### Profiling Results
+### Memory profiling
 
-Example output:
+#### In-use memory (heap)
+
+~3.2 MB retained at program end
+- No memory leak
+- Aggregation map remains small
+
+#### Total allocations
+15.52 GB allocated during execution
+100% attributed to:
 
 ```
-flat    flat%   function
-49.38s  96.48%  syscall.syscall
+bufio.(*Scanner).Text
 ```
 
-Full output:
-```
-Showing nodes accounting for 50.17s, 98.03% of 51.18s total
-      flat  flat%   sum%        cum   cum%
-    49.38s 96.48% 96.48%     49.38s 96.48%  syscall.syscall
-```
+This indicates:
+* One string allocation per input line
+* 1B string allocations
+* Significant GC churn despite small retained heap
 
-### Interpretation
+### Peak RSS (OS-level memory usage)
 
-* ~96% of CPU time is spent in syscall.syscall
-* The workload is strongly IO-bound
-* Parsing and aggregation contribute very little relative cost
-* Optimizing compute logic would not significantly improve performance without addressing IO
+~9 MB
 
-Profiling changed the optimization direction.
+The program maintains a very small real memory footprint.
 
-Initial intuition suggested parsing would dominate.<br>
-Measurement proved otherwise.
+## Performance baseline summary
 
----
+* The implementation is IO-bound.
+* Major allocation hotspot: Scanner.Text().
+* Memory retention is minimal.
+* Allocation churn is extremely high (15GB).
+* GC likely contributes overhead.
 
-### Runtime Example
+### Next optimization step
 
-On my machine:
-```
-real    1m6s
-user    1m16s
-sys     0m4s
-```
-The higher `user` time compared to `real` indicates multi-core CPU utilization during execution.
+Replace bufio.Scanner with bufio.Reader to:
+* Eliminate per-line string allocations
+* Reduce total allocations
+* Reduce GC pressure
+* Potentially improve throughput
 
----
-
-### Next Steps
-
-* Find a way to speed up the execution time.
+**Future improvements will be measured against this baseline.**
